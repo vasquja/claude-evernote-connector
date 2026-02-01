@@ -61,8 +61,10 @@ class EvernoteConnector:
         notebooks = self.list_notebooks()
         for notebook in notebooks:
             if notebook.name.lower() == notebook_name.lower():
-                logger.debug("Found notebook '%s' with GUID: %s", notebook_name, notebook.guid)
-                return notebook.guid
+                logger.debug(
+                    "Found notebook '%s' with GUID: %s", notebook_name, notebook.guid
+                )
+                return str(notebook.guid)
 
         # Notebook not found, create it
         logger.info("Notebook '%s' not found, creating it", notebook_name)
@@ -83,7 +85,7 @@ class EvernoteConnector:
         created = self.note_store.createNotebook(notebook)
         self._notebooks_cache = None  # Invalidate cache
         logger.info("Created notebook '%s' with GUID: %s", name, created.guid)
-        return created.guid
+        return str(created.guid)
 
     def save_chat(
         self,
@@ -137,7 +139,7 @@ class EvernoteConnector:
         try:
             created_note = self.note_store.createNote(note)
             logger.info("Note created with GUID: %s", created_note.guid)
-            return created_note.guid
+            return str(created_note.guid)
         except Errors.EDAMUserException as e:
             logger.error("Failed to create note: %s", e.errorCode)
             raise EvernoteError(f"Failed to create note: {e.errorCode}") from e
@@ -258,8 +260,7 @@ class EvernoteConnector:
             escaped_code = html.escape(code)
             styled_code = f'<span style="{STYLES["inline_code"]}">{escaped_code}</span>'
             processed = processed.replace(
-                html.escape(placeholder_template.format(i)),
-                styled_code
+                html.escape(placeholder_template.format(i)), styled_code
             )
 
         return processed

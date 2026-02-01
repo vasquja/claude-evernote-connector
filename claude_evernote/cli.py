@@ -4,7 +4,7 @@ import logging
 import os
 import sys
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 import click
 from dotenv import load_dotenv
@@ -15,7 +15,7 @@ from .client import EvernoteConnector, EvernoteError
 logger = logging.getLogger(__name__)
 
 
-def get_config() -> dict[str, Optional[str] | bool]:
+def get_config() -> dict[str, Any]:
     """
     Load configuration from environment variables.
 
@@ -65,10 +65,20 @@ def cli(verbose: bool) -> None:
 
 
 @cli.command()
-@click.option("--title", "-t", help="Title for the note (auto-generated if not provided)")
+@click.option(
+    "--title", "-t", help="Title for the note (auto-generated if not provided)"
+)
 @click.option("--notebook", "-n", help="Target notebook name")
-@click.option("--tags", "-g", multiple=True, help="Tags to apply (can be used multiple times)")
-@click.option("--file", "-f", "input_file", type=click.Path(exists=True), help="Input file containing chat content")
+@click.option(
+    "--tags", "-g", multiple=True, help="Tags to apply (can be used multiple times)"
+)
+@click.option(
+    "--file",
+    "-f",
+    "input_file",
+    type=click.Path(exists=True),
+    help="Input file containing chat content",
+)
 @click.option("--token", envvar="EVERNOTE_DEV_TOKEN", help="Evernote developer token")
 @click.option("--sandbox", is_flag=True, help="Use Evernote sandbox environment")
 def save(
@@ -98,8 +108,13 @@ def save(
     dev_token = token or config.get("token")
     if not dev_token:
         click.echo("Error: No Evernote developer token provided.", err=True)
-        click.echo("Set EVERNOTE_DEV_TOKEN environment variable or use --token", err=True)
-        click.echo("\nGet a token at: https://www.evernote.com/api/DeveloperToken.action", err=True)
+        click.echo(
+            "Set EVERNOTE_DEV_TOKEN environment variable or use --token", err=True
+        )
+        click.echo(
+            "\nGet a token at: https://www.evernote.com/api/DeveloperToken.action",
+            err=True,
+        )
         sys.exit(1)
 
     # Get sandbox setting
@@ -107,7 +122,9 @@ def save(
 
     # Get notebook from args or config
     notebook_config = config.get("notebook")
-    target_notebook = notebook or (notebook_config if notebook_config else None)
+    target_notebook: Optional[str] = notebook or (
+        str(notebook_config) if notebook_config else None
+    )
 
     # Read chat content
     if input_file:
@@ -199,7 +216,9 @@ def verify(token: Optional[str], sandbox: bool) -> None:
     if not dev_token:
         click.echo("No Evernote developer token found.", err=True)
         click.echo("\nTo set up:")
-        click.echo("1. Get a token at: https://www.evernote.com/api/DeveloperToken.action")
+        click.echo(
+            "1. Get a token at: https://www.evernote.com/api/DeveloperToken.action"
+        )
         click.echo("2. Set EVERNOTE_DEV_TOKEN environment variable")
         click.echo("   Or create a .env file with: EVERNOTE_DEV_TOKEN=your_token")
         sys.exit(1)
